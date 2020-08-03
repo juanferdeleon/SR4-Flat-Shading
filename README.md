@@ -1,10 +1,10 @@
-# SR3: Obj Models
+# SR4: Flat Shading
 
-SR3 permite cargar modelos 3D básicos a nivel de wireframe en un archivo bmp, utilizando la implementacion de glLines() en [SR2: Lines](https://github.com/juanferdeleon/SR2-Lines).
+Cargar modelos 3D y colorearlos en tonalidades de gris de acuerdo a una fuente de luz.
 
 ## Como ejecutar el codigo
 
-Descargue el repositorio [SR3: Obj Models](https://github.com/juanferdeleon/SR3-Obj-Models)
+Descargue el repositorio [SR4: Flat Shading](https://github.com/juanferdeleon/SR4-Flat-Shading)
 
 Luego ejecute el archivo [Engine3D.py](/Engine3D.py) dentro de cualquier IDE.
 
