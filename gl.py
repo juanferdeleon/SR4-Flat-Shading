@@ -76,6 +76,31 @@ def norm(v0):
     else:
         return V3(v0.x/l, v0.y/l, v0.z/l)
 
+def bbox(A, B, C):
+    
+    xs = sorted([int(A.x), int(B.x), int(C.x)])
+    ys = sorted([int(A.y), int(B.y), int(C.y)])
+    a = V2(int(xs[0]), int(ys[0]))
+    b = V2(int(xs[2]), int(ys[2]))    
+    
+    return a, b
+
+def barycentric(A, B, C, P):
+    '''Convert vertices to barycentric coordinates'''
+    
+    cx, cy, cz = cross(V3(B.x - A.x, C.x - A.x, A.x - P.x), V3(B.y - A.y, C.y - A.y, A.y - P.y))
+
+    #CZ Cannot be less 1
+    if cz == 0:
+        return -1, -1, -1
+
+    #Calculate the barycentric coordinates
+    u = cx/cz
+    v = cy/cz
+    w = 1 - (u + v)
+
+    return  w, v, u
+
 class Bitmap(object):
     '''Bitmap Class'''
 
