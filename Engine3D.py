@@ -29,7 +29,7 @@ if __name__ == '__main__':
     #Set pixel Colors
     bmp.glColor(1, 1, 0)
 
-    bmp.glLoadObjModel('cube.obj', (0.5, 0.5), (0.5, 0.5))
+    bmp.glLoadObjModel('face.obj', (0, 0), (0.03, 0.03))
     
     #Output BMP
     bmp.glWrite("test.bmp")

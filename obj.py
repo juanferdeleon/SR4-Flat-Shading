@@ -26,6 +26,17 @@ class ObjReader(object):
         #Reads individual lines from .obj file
         self.readLines()
     
+
+    def removeSpaces(self, face):
+        '''Remove empty spaces if they exist'''
+
+        store_data = face.split('/')
+
+        if ("") in store_data:
+            store_data.remove("")
+        
+        return map(int, store_data)
+
     def readLines(self):
         '''Read individual lines from .obj file'''
         
@@ -33,11 +44,10 @@ class ObjReader(object):
             if line:
                 prefix, value = line.split(' ', 1)
                 if prefix == 'v':
-                    if prefix == 'v':
-                        self.vertices.append(list(map(float,value.split(' '))))
+                    self.vertices.append(list(map(float,value.split(' '))))
                 elif prefix == 'vn':
                     self.normals.append(list(map(float,value.split(' '))))
                 elif prefix == 'vt':
-                    self.texcoords.append(list(map(float,value.split(' '))))
+                    self.tex_coords.append(list(map(float,value.split(' '))))
                 elif prefix == 'f':
-                    self.faces.append([list(map(int,vert.split('/'))) for vert in value.split(' ')])
+                    self.faces.append([list(self.removeSpaces(face)) for face in value.split(' ')])

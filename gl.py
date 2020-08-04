@@ -10,6 +10,7 @@ Creado por:
 '''
 
 import struct
+import collections
 from obj import ObjReader
 
 def char(c):
@@ -31,6 +32,49 @@ def color(r,g,b):
     '''Set pixel color'''
 
     return bytes([b, g, r])
+
+#Constants
+V2 = collections.namedtuple('Vertex2', ['x', 'y'])
+V3 = collections.namedtuple('Vertex3', ['x', 'y', 'z'])
+
+#Arithmetics
+
+def sum(v0, v1):
+    '''Vector Sum'''
+    return V3(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z)
+
+def sub(v0, v1):
+    '''Vector Substraction'''
+    return V3(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z)
+
+def mul(v0, k):
+    '''Vector Multiplication'''
+    return V3(v0.x * k, v0.y * k, v0.z * k)
+
+def dot(v0, v1):
+    '''Dot Product'''
+    return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z
+
+def cross(v0, v1):
+    '''Cross Product'''
+    
+    x = v0.y * v1.z - v0.z * v1.y
+    y = v0.z * v1.x - v0.x * v1.z
+    z = v0.x * v1.y - v0.y * v1.x
+
+    return V3(x, y, z)
+
+def magnitud(v0):
+    '''Vector Magnitud'''
+    return (v0.x**2 + v0.y**2 + v0.z**2)**0.5
+
+def norm(v0):
+    '''Normal vector'''
+    l = magnitud(v0)
+    if l == 0:
+        return V3(0, 0, 0)
+    else:
+        return V3(v0.x/l, v0.y/l, v0.z/l)
 
 class Bitmap(object):
     '''Bitmap Class'''
@@ -194,16 +238,16 @@ class Bitmap(object):
         for face in model.faces:
             vertices_ctr = len(face)
             for j in range(vertices_ctr):
-                f1 = face[j][1]
-                f2 = face[(j+1) % vertices_ctr][1]
+                f1 = face[j][0]
+                f2 = face[(j+1) % vertices_ctr][0]
                 
                 v1 = model.vertices[f1 - 1]
                 v2 = model.vertices[f2 - 1]
 
-                x1 = (v1[0] + translate[0] * scale[0])
-                y1 = (v1[1] + translate[1] * scale[1])
-                x2 = (v2[0] + translate[0] * scale[0])
-                y2 = (v2[1] + translate[1] * scale[1])
+                x1 = (v1[0] + translate[0]) * scale[0]
+                y1 = (v1[1] + translate[1]) * scale[1]
+                x2 = (v2[0] + translate[0]) * scale[0]
+                y2 = (v2[1] + translate[1]) * scale[1]
 
                 self.glLine(x1, y1, x2, y2)
 
