@@ -110,6 +110,7 @@ class Bitmap(object):
         self.height = height
         self.width = width
         self.framebuffer = []
+        self.zbuffer = []
         self.clear_color = color(0, 0, 0)
         self.vertex_color = color(255, 0, 0)
         self.glClear()
@@ -140,6 +141,10 @@ class Bitmap(object):
         self.framebuffer = [
             [self.clear_color for x in range(self.width)] for y in range(self.height)
         ]
+
+        self.zbuffer = [
+            [-1*float('inf') for x in range(self.width)] for y in range(self.height)
+            ]
     
     def glClearColor(self, r, g, b):
         '''Can change the color of glClear(), parameters must be numbers in the 
@@ -237,6 +242,100 @@ class Bitmap(object):
                 y += 1 if y0 < y1 else -1
                 threshold += 1 * dx
 
+    def glTransform(self, vertex, translate=(0, 0, 0), scale=(1, 1, 1)):
+        '''Transforms vertex into tuple'''
+        try:
+            return V3(
+                (int(round((vertex[0]+1) * self.width / 2)) + translate[0]) * scale[0],
+                (int(round((vertex[1]+1) * self.height / 2)) + translate[1]) * scale[1],
+                (int(round((vertex[2]+1) * self.width / 2)) + translate[2]) * scale[2]
+            )
+        except IndexError:
+            return V3(
+                (int(round((vertex[0]+1) * self.width / 2)) + translate[0]) * scale[0],
+                (int(round((vertex[1]+1) * self.height / 2)) + translate[1]) * scale[1],
+                (int(round((0.0+1) * self.width / 2)) + translate[1]) * scale[1]
+            )
+
+    def glFillTriangle(self, a, b, c):
+        '''Algorithm for filling triangles'''
+
+        if a.y > b.y:
+            a, b = b, a
+        if a.y > c.y:
+            a, c = c, a
+        if b.y > c.y:
+            b, c = c, b
+        
+        ac_x_slope = c.x - a.x
+        ac_y_slope = c.y - a.y
+
+        if ac_y_slope == 0:
+            return
+        
+        inverse_ac_slope = ac_x_slope / ac_y_slope
+
+        ab_x_slope = b.x - a.y
+        ab_y_slope = b.y - a.y
+
+        if ab_y_slope != 0:
+
+            inverse_ab_slope = ab_x_slope / ab_y_slope
+
+            for y in range(a.y, b.y + 1):
+                x0 = round(a.x - inverse_ac_slope * (a.y - y))
+                xf = round(a.x - inverse_ab_slope * (a.y - y))
+
+                if x0 > xf:
+                    x0, xf = xf, x0
+                
+                for x in range(x0, xf + 1):
+                    self.glPoint((float(x)/(float(self.width)/2))-1,(float(y)/(float(self.height)/2))-1,self.vertex_color)
+        
+        bc_x_slope = c.x - b.x
+        bc_y_slope = c.y - b.y
+
+        if bc_y_slope:
+
+            inverse_bc_slope = bc_x_slope / bc_y_slope
+
+            for y in range (b.y, c.y + 1):
+                x0 = round(a.x - inverse_ac_slope * (a.y - y))
+                xf = round(b.x - inverse_bc_slope * (b.y - y))
+
+                if x0 > xf:
+                    x0, xf = xf, x0
+                
+                for x in range(x0, xf + 1):
+                    self.glPoint((float(x)/(float(self.width)/2))-1,(float(y)/(float(self.height)/2))-1,self.vertex_color)
+                    
+    def triangle(self, A, B, C, color=None, texture=None, tex_coords=(), intensity = 1):
+        '''Algorithm for filling triangles with barycentric coords'''
+
+        bbox_min, bbox_max = bbox(A, B, C)
+
+        for x in range(bbox_min.x, bbox_max.x + 1):
+            for y in range(bbox_min.y, bbox_max.y +1):
+
+                w, v, u = barycentric(A, B, C, V2(x, y))
+
+                if w < 0 or v < 0 or u < 0:
+                    continue
+
+                if texture:
+                    ta, tb, tc = tex_coords
+                    tx = ta.x * w + tb.x * v + tc.x * u
+                    ty = ta.y * w + tb.y * v + tc.y * u
+                    
+                    color = texture.get_color(tx, ty, intensity)
+                    self.vertex_color = color
+
+                z = A.z * w + B.z * v + C.z * u
+
+                if z > self.zbuffer[y][x]:
+                    self.glPoint((float(x)/(float(self.width)/2))-1, (float(y)/(float(self.height)/2))-1,self.vertex_color)
+                    self.zbuffer[y][x] = z
+
     def glFillPolygon(self, polygon):
         '''Fill any given polygon'''
         #Based on Point-in-Polygon (PIP) Algorithm
@@ -254,29 +353,49 @@ class Bitmap(object):
                 if draw_point:
                     self.glPoint((float(x)/(float(self.width)/2))-1,(float(y)/(float(self.height)/2))-1,self.vertex_color)
 
-    def glLoadObjModel(self, file_name, translate=(0,0), scale=(1,1)):
+    def glLoadObjModel(self, file_name, texture=None, translate=(0,0), scale=(1,1)):
         '''Load and Render .obj file'''
         #Reads .obj file
         model = ObjReader(file_name)
         model.readLines()
+
+        light = V3(0, 0.4, 1)
         
         for face in model.faces:
             vertices_ctr = len(face)
-            for j in range(vertices_ctr):
-                f1 = face[j][0]
-                f2 = face[(j+1) % vertices_ctr][0]
+
+            if vertices_ctr == 3:
+                f1 = face[0][0] - 1
+                f2 = face[1][0] - 1
+                f3 = face[2][0] - 1
                 
-                v1 = model.vertices[f1 - 1]
-                v2 = model.vertices[f2 - 1]
+                a = self.glTransform(model.vertices[f1], translate, scale)
+                b = self.glTransform(model.vertices[f2], translate, scale)
+                c = self.glTransform(model.vertices[f3], translate, scale)
 
-                x1 = (v1[0] + translate[0]) * scale[0]
-                y1 = (v1[1] + translate[1]) * scale[1]
-                x2 = (v2[0] + translate[0]) * scale[0]
-                y2 = (v2[1] + translate[1]) * scale[1]
+                normal = norm(cross(sub(b,a),sub(c,a)))
 
-                self.glLine(x1, y1, x2, y2)
+                light = norm(light)
 
+                intensity = dot(normal, light)
 
+                if intensity < 0:
+                    continue
+                
+                if texture:
+                    tv1 = face[0][1] - 1
+                    tv2 = face[1][1] - 1
+                    tv3 = face[2][1] - 1
+                    
+                    tvA = self.glTransform(model.tex_coords[tv1],translate,scale)
+                    tvB = self.glTransform(model.tex_coords[tv2],translate,scale)
+                    tvC = self.glTransform(model.tex_coords[tv3],translate,scale)
+
+                    self.triangle(a,b,c, texture = texture, tex_coords = (tvA, tvB, tvC), intensity = intensity)
+                
+                else:
+                    self.triangle(a,b,c, color = self.glColor(intensity, intensity, intensity))
+    
     def glWrite(self, file_name):
         '''Write Bitmap File'''
         

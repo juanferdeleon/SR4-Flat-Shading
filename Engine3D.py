@@ -11,7 +11,7 @@ Engine 3D
 
 from gl import Bitmap
 
-bmp = Bitmap(800, 800)
+bmp = Bitmap(1000, 1000)
 
 def glInit():
     return bmp
@@ -27,9 +27,9 @@ if __name__ == '__main__':
     bmp.glClear()
 
     #Set pixel Colors
-    bmp.glColor(1, 1, 0)
+    bmp.glColor(1, 1, 1)
 
-    bmp.glLoadObjModel('face.obj', (0, 0), (0.03, 0.03))
+    bmp.glLoadObjModel('cat.obj')
     
     #Output BMP
     bmp.glWrite("test.bmp")
