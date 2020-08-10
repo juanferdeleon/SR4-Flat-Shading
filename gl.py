@@ -254,7 +254,7 @@ class Bitmap(object):
             return V3(
                 (int(round((vertex[0]+1) * self.width / 2)) + translate[0]) * scale[0],
                 (int(round((vertex[1]+1) * self.height / 2)) + translate[1]) * scale[1],
-                (int(round((0.0+1) * self.width / 2)) + translate[1]) * scale[1]
+                (int(round((0.0+1) * self.width / 2)) + translate[2]) * scale[2]
             )
 
     def glFillTriangle(self, a, b, c):
@@ -275,7 +275,7 @@ class Bitmap(object):
         
         inverse_ac_slope = ac_x_slope / ac_y_slope
 
-        ab_x_slope = b.x - a.y
+        ab_x_slope = b.x - a.x
         ab_y_slope = b.y - a.y
 
         if ab_y_slope != 0:
@@ -353,7 +353,7 @@ class Bitmap(object):
                 if draw_point:
                     self.glPoint((float(x)/(float(self.width)/2))-1,(float(y)/(float(self.height)/2))-1,self.vertex_color)
 
-    def glLoadObjModel(self, file_name, texture=None, translate=(0,0), scale=(1,1)):
+    def glLoadObjModel(self, file_name, texture=None, translate=(0,0, 0), scale=(1,1, 1)):
         '''Load and Render .obj file'''
         #Reads .obj file
         model = ObjReader(file_name)
@@ -424,6 +424,7 @@ class Bitmap(object):
         # Pixeles, 3 bytes each
         for x in range(self.height):
             for y in range(self.width):
+                self.framebuffer[x][y]
                 bmp_file.write(self.framebuffer[x][y])
             
         bmp_file.close()
